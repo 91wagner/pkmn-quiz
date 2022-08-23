@@ -688,13 +688,15 @@ class Game:
         # true if full points -> display best time instead of points
         maxpoints = (newscore == len(self.current_gens_id) or newscore == 9999)
         
+        if maxpoints and self.success and self.in_order_mode != 0:
+            self.highscore_in_order_mode[self.current_game_id] = 1
+
         if newscore >= self.highscore_values[current_language_index][self.current_game_id]:
             self.highscore_values[current_language_index][self.current_game_id] = newscore
             if maxpoints:
                 if self.highscore_times[current_language_index][self.current_game_id] > newtime:
                     self.highscore_times[current_language_index][self.current_game_id] = newtime
-                if self.success and self.in_order_mode != 0:
-                    self.highscore_in_order_mode[self.current_game_id] = 1
+                
 
         # create the string with the Game ID and the highscores
         if self.language == "ger":
