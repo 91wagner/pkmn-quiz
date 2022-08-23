@@ -630,8 +630,12 @@ class Game:
                 for pokemon in pokemons:
                     dexnumber = pokemon[0]
                     if self.in_order_mode != 0 and self.pokemon_texts_pos[dexnumber] != self.found_answers:
-                        self.Flash(self.input_field, "yellow")
-                        self.Flash(self.pokemon_texts[dexnumber], "yellow", 1000)
+                        if self.pokemon_texts_pos[dexnumber] < self.found_answers:
+                            self.Flash(self.input_field, "red")
+                            self.Flash(self.pokemon_texts[dexnumber], "red", 1000)
+                        else:
+                            self.Flash(self.input_field, "yellow")
+                            self.pokemon_texts[dexnumber].config(background="yellow")
                         continue
                     if self.pokemon_texts[dexnumber]["text"] == "":
                         self.pokemon_texts[dexnumber]["text"] = pokemon[1]
