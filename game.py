@@ -631,7 +631,7 @@ class Game:
                     dexnumber = pokemon[0]
                     if self.in_order_mode != 0 and self.pokemon_texts_pos[dexnumber] != self.found_answers:
                         self.Flash(self.input_field, "yellow")
-                        self.Flash(self.pokemon_texts[dexnumber], "yellow")
+                        self.Flash(self.pokemon_texts[dexnumber], "yellow", 1000)
                         continue
                     if self.pokemon_texts[dexnumber]["text"] == "":
                         self.pokemon_texts[dexnumber]["text"] = pokemon[1]
