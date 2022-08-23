@@ -634,8 +634,8 @@ class Game:
                             self.Flash(self.input_field, "red")
                             self.Flash(self.pokemon_texts[dexnumber], "red", 1000)
                         else:
-                            self.Flash(self.input_field, "yellow")
-                            self.pokemon_texts[dexnumber].config(background="yellow")
+                            self.Flash(self.input_field, "red")
+                            self.Flash(self.pokemon_texts[dexnumber], "red", 1000, "yellow")
                         continue
                     if self.pokemon_texts[dexnumber]["text"] == "":
                         self.pokemon_texts[dexnumber]["text"] = pokemon[1]
@@ -673,9 +673,13 @@ class Game:
         self.input_field.config(validate="all")
 
 
-    def Flash(self, object, color="red", t=200):
+    def Flash(self, object, color="red", t=200, oldcolor="white"):
+        """'object': object that should flash
+        'color': color to flash to
+        't': time it should flash to color
+        'oldcolor': color to change after the flash"""
         object.config(background=color)
-        self.window.after(t, lambda: object.config(background="white"))
+        self.window.after(t, lambda: object.config(background=oldcolor))
 
 
     def UpdateHighscore(self, newscore=0, newtime=0):
