@@ -90,7 +90,7 @@ class Game:
         self.pokemon_texts = {}
         self.pokemon_texts_pos = {}
 
-        self.timer_label_color = "gray90"
+        self.timer_label_color = "gray70"
 
         self.progress_label = Label(text=f"0 / {len(self.current_gens_id)}", width=7, font=("Arial", 25, 'bold'), anchor="e", background=self.timer_label_color)
         self.progress_label.pack()
@@ -634,7 +634,7 @@ class Game:
                             self.Flash(self.input_field, "red")
                             self.Flash(self.pokemon_texts[dexnumber], "red", 1000)
                         else:
-                            self.Flash(self.input_field, "red")
+                            self.Flash(self.input_field, "yellow")
                             self.Flash(self.pokemon_texts[dexnumber], "red", 1000, "yellow")
                         continue
                     if self.pokemon_texts[dexnumber]["text"] == "":
