@@ -39,6 +39,8 @@ class Game:
         self.language_values = ("ger", "eng", "all")
 
         self.in_order_mode = 0
+        self.previous_completed = True
+        """Only for in-order-mode and language "all" needed"""
         
         
         self.gen_name_all = [pg.gen_name_all for pg in [pg1, pg2, pg3, pg4, pg5, pg6, pg7, pg8]]
@@ -501,6 +503,7 @@ class Game:
                 self.success = False 
                 self.given_up = False
                 self.out_of_time = False
+                self.previous_completed = True
                 self.input_field.delete(0, END)
                 self.progress_label["text"] = f"0 / {len(self.current_gens_id)}"
                 for dexnumber, pokemontext in self.pokemon_texts.items():
@@ -587,6 +590,7 @@ class Game:
                         break
                 if all_green:
                     self.found_answers = 9999
+            self.success = False
         self.input_field["state"] = "disabled"
         self.running = False
         self.RemovePauseBlock()
@@ -629,35 +633,59 @@ class Game:
             else:
                 for pokemon in pokemons:
                     dexnumber = pokemon[0]
-                    if self.in_order_mode != 0 and self.pokemon_texts_pos[dexnumber] != self.found_answers:
-                        if self.pokemon_texts_pos[dexnumber] < self.found_answers:
-                            self.Flash(self.input_field, "red")
-                            self.Flash(self.pokemon_texts[dexnumber], "red", 1000)
+
+                    if self.in_order_mode != 0: # is in-order-mode
+                        success = False
+                        if self.language == "all":
+                            if self.previous_completed and self.pokemon_texts_pos[dexnumber] == self.found_answers:
+                                success = True
+                            if (not self.previous_completed) and self.pokemon_texts_pos[dexnumber] == self.found_answers-1:
+                                success = True
                         else:
-                            self.Flash(self.input_field, "yellow")
-                            self.Flash(self.pokemon_texts[dexnumber], "red", 1000, "yellow")
-                        continue
+                            if self.pokemon_texts_pos[dexnumber] == self.found_answers:
+                                success = True
+                        
+                        if not success:
+                            if self.pokemon_texts_pos[dexnumber] < self.found_answers:
+                                self.Flash(self.input_field, "red")
+                                self.Flash(self.pokemon_texts[dexnumber], "red", 1000)
+                            else:
+                                self.Flash(self.input_field, "yellow")
+                                self.Flash(self.pokemon_texts[dexnumber], "red", 1000, "yellow")
+                            continue
+
                     if self.pokemon_texts[dexnumber]["text"] == "":
                         self.pokemon_texts[dexnumber]["text"] = pokemon[1]
                         self.found_answers += 1
                         self.UpdateProgress()
                         if self.language == "all" and self.current_gens_id_eng[dexnumber] == self.current_gens_id_ger[dexnumber]:
                             self.pokemon_texts[dexnumber]["fg"] = "green"
+                            self.previous_completed = True
+                            if self.found_answers == len(self.current_gens_id):
+                                self.success = True
+                        else:
+                            self.previous_completed = False
                         self.Flash(self.input_field, "green")
                         self.Flash(self.pokemon_texts[dexnumber], "green")
                         self.ClearInput()
 
-                        if self.found_answers == len(self.current_gens_id):
+                        if self.found_answers == len(self.current_gens_id) and self.language != "all":
                             self.success = True
+                                
                     else:
                         if self.language == "all" and self.pokemon_texts[dexnumber]["fg"] != "green" and self.pokemon_texts[dexnumber]["text"] != pokemon[1]:
                             self.pokemon_texts[dexnumber]["fg"] = "green"
                             self.Flash(self.input_field, "green")
                             self.Flash(self.pokemon_texts[dexnumber], "green")
+                            self.previous_completed = True
+                            if self.found_answers == len(self.current_gens_id):
+                                self.success = True
+
                             self.ClearInput()
                         else:
                             self.Flash(self.input_field, "yellow")
                             self.Flash(self.pokemon_texts[dexnumber], "yellow")
+                            self.previous_completed = False
 
         return True        
 
