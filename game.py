@@ -590,12 +590,12 @@ class Game:
                         break
                 if all_green:
                     self.found_answers = 9999
-            self.success = False
         self.input_field["state"] = "disabled"
         self.running = False
         self.RemovePauseBlock()
         self.paused = False
         self.UpdateHighscore(self.found_answers, self.time_needed//10) # time in seconds
+        self.success = False
         self.window.update()
 
 
