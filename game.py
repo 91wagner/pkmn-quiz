@@ -9,51 +9,32 @@ import threading
 from os.path import exists
 from os import remove
 
+print("Loading gens...")
 
-import poke_gen1 as pg1
-import poke_gen2 as pg2
-import poke_gen3 as pg3
-import poke_gen4 as pg4
-import poke_gen5 as pg5
-import poke_gen6 as pg6
-import poke_gen7 as pg7
-import poke_gen8 as pg8
-import poke_gen9 as pg9
-
+from genhandler import *
 from localization import *
 
 class Game:
-    # class variables
-    total_gen_number = 9
     
-    # databases
-    gen_name_all = [pg.gen_name_all for pg in [pg1, pg2, pg3, pg4, pg5, pg6, pg7, pg8, pg9]]
-    gen_name_eng = [pg.gen_name_eng for pg in [pg1, pg2, pg3, pg4, pg5, pg6, pg7, pg8, pg9]]
-    gen_name_ger = [pg.gen_name_ger for pg in [pg1, pg2, pg3, pg4, pg5, pg6, pg7, pg8, pg9]]
-    gen_id_all = [pg.gen_id_all for pg in [pg1, pg2, pg3, pg4, pg5, pg6, pg7, pg8, pg9]]
-    gen_id_eng = [pg.gen_id_eng for pg in [pg1, pg2, pg3, pg4, pg5, pg6, pg7, pg8, pg9]]
-    gen_id_ger = [pg.gen_id_ger for pg in [pg1, pg2, pg3, pg4, pg5, pg6, pg7, pg8, pg9]]
-
     # colors
-    gen_colors = ["black", "blue", "red", "green", "orange", "purple", "brown", "cyan", "violet"]
     timer_label_color = "gray70"
 
     # filenames
-    highscore_location = "highscore.txt"
-    settings_location = "settings.txt"
+    highscore_location = ".highscore.txt"
+    settings_location = ".settings.txt"
+    savestate_location = ".savestate.txt"
 
     # constructor
     def __init__(self):    
         
-        self.maxtime = 0 
-        """starting time in seconds"""
+        
         self.time_needed = 0
         """current time needed in 0.1s"""
         
         self.current_game_id = 0
         self.gen_number = 1
         self.gens_active = [1]
-        for i in range(1,Game.total_gen_number):
+        for i in range(1,gens.total_gen_number):
             self.gens_active.append(0)
         self.language = loc.getLanguage("ger")
 
@@ -63,18 +44,6 @@ class Game:
         self.in_order_mode = 0
         self.previous_completed = True
         """Only for in-order-mode and language "all" needed"""
-        
-
-        self.current_gens_name_all =  Game.gen_name_all[0]
-        self.current_gens_name_eng =  Game.gen_name_eng[0]
-        self.current_gens_name_ger =  Game.gen_name_ger[0]
-        self.current_gens_id_all = Game.gen_id_all[0]
-        self.current_gens_id_eng = Game.gen_id_eng[0]
-        self.current_gens_id_ger = Game.gen_id_ger[0]
-
-        self.current_gens_name = self.current_gens_name_all
-        self.current_gens_id = self.current_gens_id_all
-
 
         self.window = Tk()
         self.running = False
@@ -87,7 +56,6 @@ class Game:
         self.turning_off = False
         self.settings_open = False
         self.found_answers = 0
-        # self.found_answers_all = [0]*(loc.number_languages-1)
 
         self.settings_text = StringVar(value=self.language.settings)
 
@@ -110,24 +78,24 @@ class Game:
         self.pokemon_texts_pos = {}
 
 
-        self.progress_label = Label(text=f"0 / {len(self.current_gens_id)}", width=7, font=("Arial", 25, 'bold'), anchor="e", background=Game.timer_label_color)
+        self.progress_label = Label(text=f"0 / {len(gens.getCurrentIDs(self.language.index))}", width=7, font=("Arial", 25, 'bold'), anchor="e", background=Game.timer_label_color)
         self.progress_label.pack()
         self.progress_label.place(x=420, y=5)
 
 
-        self.timer_label = Label(text=f"{self.maxtime//60}:{self.maxtime%60}", font=("Arial", 25, "bold"), width=5, justify="right", background=Game.timer_label_color)
+        self.timer_label = Label(text=f"{gens.getMaxTime()//60}:{gens.getMaxTime()%60}", font=("Arial", 25, "bold"), width=5, justify="right", background=Game.timer_label_color)
         self.timer_label.pack()
         self.timer_label.place(x=575, y=5)
 
 
         self.highscore_values = []
         self.highscore_times = []
-        self.highscore_in_order_mode = [0 for i in range(0,pow(2,Game.total_gen_number))]
+        self.highscore_in_order_mode = [0 for i in range(0,pow(2,gens.total_gen_number))]
 
         # read in highscores from file
         for i in range(0,loc.number_languages):
-            self.highscore_values.append([0 for i in range(0,pow(2,Game.total_gen_number))])
-            self.highscore_times.append([100000000 for i in range(0,pow(2,Game.total_gen_number))])
+            self.highscore_values.append([0 for i in range(0,pow(2,gens.total_gen_number))])
+            self.highscore_times.append([100000000 for i in range(0,pow(2,gens.total_gen_number))])
 
         if exists(Game.highscore_location):
             with open(Game.highscore_location, mode="rb") as file:
@@ -138,7 +106,7 @@ class Game:
                     self.highscore_times[ilang] = [int(i) for i in lines[2*ilang+1].split()]
                 self.highscore_in_order_mode = [int(i) for i in lines[2*loc.number_languages].split()]
 
-        self.highscore_label = Label(text=self.language.highscore + ": ", bg="LightSkyBlue1")
+        self.highscore_label = Label(text=self.language.highscores+": ", bg="LightSkyBlue1")
         self.highscore_label.pack()
         self.highscore_label.place(x=5, y=49)
         
@@ -185,17 +153,22 @@ class Game:
                 lines = d.decode().split("\n")
                 self.gen_number = int(lines[0])
                 self.gens_active = []
+                current = []
                 for i in range(0,len(lines[1])):
-                    self.gens_active.append(ord(lines[1][i]) - ord("0"))
+                    self.gens_active.append(int(lines[1][i]))
+                    if self.gens_active[-1] == 1:
+                        current.append(i+1)
                 self.in_order_mode = int(lines[2])
                 self.language = loc.getLanguage(lines[3])
-                self.LoadGen(self.gens_active.copy())
+                gens.buildCurrent(current)
+                self.UpdateGenTitle()
                 if lines[4] == "0":
                     self.windowbig = False
                 else:
                     self.windowbig = True
         else:
-            self.GenButton(self.gen_number)
+            gens.buildCurrent(self.gen_number)
+            self.UpdateGenTitle()
 
         self.LoadProgress()
 
@@ -205,7 +178,7 @@ class Game:
         if self.loaded_progress:
             self.UpdateTimer(self.pause_time//10)
         else:
-            self.UpdateTimer(self.maxtime)
+            self.UpdateTimer(gens.getMaxTime())
         self.UpdateProgress()
         self.UpdateHighscore() 
         # print("Current game ID: ", self.current_game_id)
@@ -241,7 +214,7 @@ class Game:
     # binary number with 1 at position i if gen i is enabled, 0 otherwise
     def CalculateCurrentGameID(self):
         self.current_game_id = 0
-        for i in range(0,Game.total_gen_number):
+        for i in range(0,gens.total_gen_number):
             if self.gens_active[i] == 1:
                 self.current_game_id += pow(2, i)
         return self.current_game_id
@@ -266,7 +239,7 @@ class Game:
         # gen settings
         Label(self.settings_window, text=self.language.choose_gen+":", width=20, height=1, anchor="nw").grid(column=0, row=0, columnspan=6, sticky="w")
         gen_radio_var = IntVar(self.settings_window, self.gen_number)
-        for i in range(0,Game.total_gen_number+1):
+        for i in range(0,gens.total_gen_number+1):
             gentext = f"Gen {i}"
             if i == 0:
                 gentext = self.language.combination
@@ -278,13 +251,13 @@ class Game:
             gen_radio_var.set(0)
         # multiple gens
         Label(self.settings_window, text=self.language.multiple_gen, width=40, height=2, anchor="w", justify="left").grid(column=0, row=3, columnspan=6, sticky="w", pady=(15,0))
-        for i in range(1,Game.total_gen_number+2):
+        for i in range(1,gens.total_gen_number+2):
             gentext = f"Gen {i}"
-            if i == Game.total_gen_number+1:
+            if i == gens.total_gen_number+1:
                 gentext = self.language.all
             igen = IntVar()
             igens.append(igen)
-            if self.gen_number == 0 and i != Game.total_gen_number+1 and self.gens_active[i-1]:
+            if self.gen_number == 0 and i != gens.total_gen_number+1 and self.gens_active[i-1]:
                 igen.set(1)
             Checkbutton(self.settings_window, text=gentext, variable=igen, command=ChangeRadiobutton).grid(column=(i-1)%5, row=4+(i-1)//5, sticky="w")
 
@@ -306,36 +279,27 @@ class Game:
             # print("In order mode: ", in_order_var.get())
             self.AddLoadingBlock()
             if gen_radio_var.get() > 0:
-                self.GenButton(gen_radio_var.get())
+                gens.buildCurrent(gen_radio_var.get())
             else:
                 first = True
-                for i in range(0,Game.total_gen_number):
+                current = []
+                for i in range(0,gens.total_gen_number):
                     igenval = igens[i].get()
-                    if igenval == 1 or igens[Game.total_gen_number].get() == 1:
-                        if first:
-                            self.GenButton(i+1)
-                            first = False
-                        else:
-                            self.GenButton(i+1,True)
+                    if igenval == 1 or igens[gens.total_gen_number].get() == 1:
+                        current.append(i+1)
                         self.gens_active[i] = 1
                     else:
                         self.gens_active[i] = 0
-                    self.gen_number = 0
-                if first:
-                    # no gens selected, but combination was chosen
-                    # enter secret game mode:
-                    self.current_gens_id_all = {8357 : "Joltik"}
-                    self.current_gens_id_eng = {8357 : "Joltik"}
-                    self.current_gens_id_ger = {8357 : "Wattzapf"}
-                    self.current_gens_name_all = {"joltik" : [(8357, "Joltik")]}
-                    self.current_gens_name_eng = {"joltik" : [(8357, "Joltik")]}
-                    self.current_gens_name_ger = {"wattzapf" : [(8357, "Wattzapf")]}
-                    self.maxtime = 333*60+33
+                self.gen_number = 0
+                
+                gens.buildCurrent(current) 
+
+            self.UpdateGenTitle()
             self.LanguageButton(loc.getLanguageFromIndex(language_radio_var.get()).tag)
             self.start_button["text"] = self.language.start
             
             self.UpdateHighscore()
-            self.UpdateTimer(self.maxtime)
+            self.UpdateTimer(gens.getMaxTime())
             if len(self.progress) != 0:
                 self.UpdateTimer(self.pause_time)
             self.UpdateProgress()
@@ -362,65 +326,9 @@ class Game:
     def DeleteInput(self, event):
         self.input_field.delete(0,END)
 
-
-    def GenButton(self, new_gen, add=False):
-        if self.running:
-            return
-        self.found_answers = 0
-
-        if add:
-            self.gen_number = 0
-            self.gens_active[new_gen-1] = 1
-            self.gen_label["text"] += f"{new_gen}"
-            self.window.title(f"Sporcle: Pokemon Gen X")
-            self.current_gens_name_all = {**self.current_gens_name_all,**Game.gen_name_all[new_gen-1]}
-            self.current_gens_name_eng = {**self.current_gens_name_eng,**Game.gen_name_eng[new_gen-1]}
-            self.current_gens_name_ger = {**self.current_gens_name_ger,**Game.gen_name_ger[new_gen-1]}
-            self.current_gens_id_all = {**self.current_gens_id_all,**Game.gen_id_all[new_gen-1]}
-            self.current_gens_id_eng = {**self.current_gens_id_eng,**Game.gen_id_eng[new_gen-1]}
-            self.current_gens_id_ger = {**self.current_gens_id_ger,**Game.gen_id_ger[new_gen-1]}
-        else:
-            self.gen_number = new_gen
-            for i in range(0,Game.total_gen_number):
-                if i+1 == new_gen:
-                    self.gens_active[i] = 1
-                else:
-                    self.gens_active[i] = 0
-                self.gen_label["text"] = f"Gen {new_gen}"
-                self.window.title(f"Sporcle: Pokemon Gen {new_gen}")
-            self.current_gens_name_all = Game.gen_name_all[new_gen-1]
-            self.current_gens_name_eng = Game.gen_name_eng[new_gen-1]
-            self.current_gens_name_ger = Game.gen_name_ger[new_gen-1]
-            self.current_gens_id_all = Game.gen_id_all[new_gen-1]
-            self.current_gens_id_eng = Game.gen_id_eng[new_gen-1]
-            self.current_gens_id_ger = Game.gen_id_ger[new_gen-1]
-        
-
-
-        if not add:
-            self.maxtime = 0
-        match new_gen:
-            case 1:
-                self.maxtime += 20*60
-            case 2:
-                self.maxtime += 15*60
-            case 3:
-                self.maxtime += 20*60
-            case 4:
-                self.maxtime += 15*60
-            case 5:
-                self.maxtime += 20*60
-            case 6:
-                self.maxtime += 15*60
-            case 7:
-                self.maxtime += 15*60
-            case 8:
-                self.maxtime += 15*60
-            case 9: 
-                self.maxtime += 20*60
-            case _:
-                print("ERROR: given generation not supported")
-
+    def UpdateGenTitle(self):
+        self.gen_label["text"] = gens.current.getTitle()
+        self.window.title(f"Sporcle: Pokemon {gens.current.getTitle()}")
 
     def LanguageButton(self, lang=""):
 
@@ -431,16 +339,6 @@ class Game:
             self.language = loc.getLanguage(lang)
         else:
             lang = self.language.tag
-        
-        if lang == "ger":
-            self.current_gens_name = self.current_gens_name_ger
-            self.current_gens_id = self.current_gens_id_ger
-        elif lang == "eng":
-            self.current_gens_name = self.current_gens_name_eng
-            self.current_gens_id = self.current_gens_id_eng
-        else:
-            self.current_gens_name = self.current_gens_name_all
-            self.current_gens_id = self.current_gens_id_all
 
         self.language_label["text"] = self.language.name
         self.exit_button["text"] = self.language.exit
@@ -465,7 +363,7 @@ class Game:
         self.turning_off = True
         self.SaveHighscores()
         self.SaveOldSettings()
-        time.sleep(0.2)
+        time.sleep(1)
         self.window.destroy()
         
 
@@ -512,14 +410,14 @@ class Game:
                 self.out_of_time = False
                 self.previous_completed = True
                 self.input_field.delete(0, END)
-                self.progress_label["text"] = f"0 / {len(self.current_gens_id)}"
+                self.progress_label["text"] = f"0 / {len(gens.getCurrentIDs(self.language.index))}"
                 for pokemontext in self.pokemon_texts.values():
                     pokemontext["fg"] = "black"
                     pokemontext["text"] = ""
                     pokemontext["bg"] = "white"
             
             if not self.loaded_progress:    
-                self.TimerClock(self.maxtime*10)
+                self.TimerClock(gens.getMaxTime()*10)
             return
 
         # pause game
@@ -624,7 +522,7 @@ class Game:
             for dexnumber, pokemontext in self.pokemon_texts.items():
                 if pokemontext["text"] == "":
                     pokemontext["fg"] = "red"
-                    pokemontext["text"] = self.current_gens_id[dexnumber]
+                    pokemontext["text"] = gens.getCurrentIDs(self.language.index)[dexnumber]
         
         self.exit_button["text"] = self.language.exit
     
@@ -633,7 +531,7 @@ class Game:
 
         if self.running:
             try:
-                pokemons = self.current_gens_name[text.lower()]
+                pokemons = gens.getCurrentNames(self.language.index)[text.lower()]
             except KeyError:
                 pass
             else:
@@ -666,10 +564,10 @@ class Game:
                         pokemon_text["text"] = pokemon[1]
                         self.found_answers += 1
                         self.UpdateProgress()
-                        if isAll and self.current_gens_id_eng[dexnumber] == self.current_gens_id_ger[dexnumber]:
+                        if isAll and gens.getCurrentIDs(loc.getIndexFromTag("eng"))[dexnumber] == gens.getCurrentIDs(loc.getIndexFromTag("ger"))[dexnumber]:
                             pokemon_text["fg"] = "green"
                             self.previous_completed = True
-                            if self.found_answers == len(self.current_gens_id):
+                            if self.found_answers == len(gens.getCurrentIDs(self.language.index)):
                                 self.success = True
                         else:
                             self.previous_completed = False
@@ -677,7 +575,7 @@ class Game:
                         self.Flash(pokemon_text, "green")
                         self.ClearInput()
 
-                        if self.found_answers == len(self.current_gens_id):
+                        if self.found_answers == len(gens.getCurrentIDs(self.language.index)):
                             if not isAll:
                                 self.success = True
                             else:
@@ -691,7 +589,7 @@ class Game:
                             self.Flash(self.input_field, "green")
                             self.Flash(pokemon_text, "green")
                             self.previous_completed = True
-                            if self.found_answers == len(self.current_gens_id):
+                            if self.found_answers == len(gens.getCurrentIDs(self.language.index)):
                                 self.success = True
 
                             self.ClearInput()
@@ -729,22 +627,21 @@ class Game:
 
         self.CalculateCurrentGameID()
         # if just update without saving new values, simply read existing highscores
-        current_language_index = self.language.index
         if newscore == 0 and newtime == 0:
-            newscore = self.highscore_values[current_language_index][self.current_game_id]
-            newtime = self.highscore_times[current_language_index][self.current_game_id]
+            newscore = self.highscore_values[self.language.index][self.current_game_id]
+            newtime = self.highscore_times[self.language.index][self.current_game_id]
 
         # true if full points -> display best time instead of points
-        maxpoints = (newscore == len(self.current_gens_id) or newscore == 9999)
+        maxpoints = (newscore == len(gens.getCurrentIDs(self.language.index)) or newscore == 9999)
         
         if maxpoints and self.success and self.in_order_mode != 0:
             self.highscore_in_order_mode[self.current_game_id] = 1
 
-        if newscore >= self.highscore_values[current_language_index][self.current_game_id]:
-            self.highscore_values[current_language_index][self.current_game_id] = newscore
+        if newscore >= self.highscore_values[self.language.index][self.current_game_id]:
+            self.highscore_values[self.language.index][self.current_game_id] = newscore
             if maxpoints:
-                if self.highscore_times[current_language_index][self.current_game_id] > newtime:
-                    self.highscore_times[current_language_index][self.current_game_id] = newtime
+                if self.highscore_times[self.language.index][self.current_game_id] > newtime:
+                    self.highscore_times[self.language.index][self.current_game_id] = newtime
                 if self.language.tag == "all":
                     for ilang in range(0,loc.number_languages):
                         if loc.getLanguageFromIndex(ilang).tag == "all": 
@@ -762,12 +659,12 @@ class Game:
         language_unicodes = ("\U0001F1E9\U0001F1EA  ", "\U0001F1EC\U0001F1E7  ", "\U0001F310  ")
         Nemblems = 0
         for ilang in range(0,loc.number_languages):
-            if  (self.highscore_values[ilang][self.current_game_id] == len(self.current_gens_id)) or self.highscore_times[ilang][self.current_game_id] < 100000000:
+            if  (self.highscore_values[ilang][self.current_game_id] == len(gens.getCurrentIDs(self.language.index))) or self.highscore_times[ilang][self.current_game_id] < 100000000:
                 highscore_text += f"{'{:02}'.format(self.highscore_times[ilang][self.current_game_id]//60)}:{'{:02}'.format(self.highscore_times[ilang][self.current_game_id]%60)} ({loc.getLanguageFromIndex(ilang).name})    "
                 highscore_suffix += language_unicodes[ilang]
                 Nemblems += 1
             else:
-                highscore_text += f"{self.highscore_values[ilang][self.current_game_id]} / {len(self.current_gens_id)} ({loc.getLanguageFromIndex(ilang).name})    "
+                highscore_text += f"{self.highscore_values[ilang][self.current_game_id]} / {len(gens.getCurrentIDs(self.language.index))} ({loc.getLanguageFromIndex(ilang).name})    "
     
         if self.highscore_values[loc.number_languages-1][self.current_game_id] == 9999:
             highscore_suffix += "\U00002606  " # star
@@ -813,7 +710,7 @@ class Game:
 
         #lines_per_column = 26
         start_yvalue = 70
-        total_number_pokemon = len(self.current_gens_id)
+        total_number_pokemon = len(gens.getCurrentIDs(self.language.index))
 
         fontsizes = [12, 9, 7, 6, 5, 4, 4]
         fontsizeoffsets = [6, 4, 5, 4, 3, 2, 2]
@@ -839,15 +736,15 @@ class Game:
         fontsize = fontsizes[sizeindex] + (fontsizeoffsets[sizeindex] if self.windowbig else 0)
         number_width = number_widths[sizeindex] + (number_width_offsets[sizeindex] if self.windowbig else 0)
 
-        lines_per_column = math.ceil(len(self.current_gens_id) / number_columns)
+        lines_per_column = math.ceil(len(gens.getCurrentIDs(self.language.index)) / number_columns)
         width_of_column = (self.xwindow) / number_columns
         height_of_rows = (self.ywindow - 80) / lines_per_column
 
         i=0
-        for dexnumber, pokemonname in self.current_gens_id.items():
+        for dexnumber in gens.getCurrentIDs(self.language.index).keys():
             
             number = '{:03}'.format(dexnumber)
-            newnumberlabel = Label(text=f"#{number}", width=4, height=1, font=('Arial', fontsize, 'bold'), foreground=Game.gen_colors[self.GetGenNumber(dexnumber)-1])
+            newnumberlabel = Label(text=f"#{number}", width=4, height=1, font=('Arial', fontsize, 'bold'), foreground=gens.gen_colors[self.GetGenNumber(dexnumber)-1])
             self.number_texts[dexnumber] = newnumberlabel
             newnumberlabel.place(x=5+width_of_column*(i//lines_per_column), y=start_yvalue+height_of_rows*(i%lines_per_column))
             
@@ -859,28 +756,28 @@ class Game:
             i+=1
         
         if len(self.progress) != 0: # load progress of last time
-            if len(self.progress) != len(self.current_gens_id.keys()):
+            if len(self.progress) != len(gens.getCurrentIDs(self.language.index).keys()):
                 assert("ERROR: save state does not match with current game ID...")
 
             lall = (self.language.tag == "all")
-            for i, dexnumber in enumerate(self.current_gens_id.keys()):
+            for i, dexnumber in enumerate(gens.getCurrentIDs(self.language.index).keys()):
                 if self.progress[i] == 0:
                     continue
                 #else:
                 if self.progress[i] > 1: # all, either English (2) or both done (3)
-                    self.pokemon_texts[dexnumber]["text"] = self.current_gens_id_eng[dexnumber]
+                    self.pokemon_texts[dexnumber]["text"] = gens.getCurrentIDs(loc.getIndexFromTag("eng"))[dexnumber]
                     if self.progress[i] == 3: # all, both done 
                         self.pokemon_texts[dexnumber]["fg"] = "green"
                 elif self.progress[i] == 1:
                     if lall:
-                        self.pokemon_texts[dexnumber]["text"] = self.current_gens_id_ger[dexnumber]
+                        self.pokemon_texts[dexnumber]["text"] = gens.getCurrentIDs(loc.getIndexFromTag("ger"))[dexnumber]
                     else:
-                        self.pokemon_texts[dexnumber]["text"] = self.current_gens_id[dexnumber]
+                        self.pokemon_texts[dexnumber]["text"] = gens.getCurrentIDs(self.language.index)[dexnumber]
 
 
                  
     def UpdateProgress(self):
-        self.progress_label["text"] = f"{self.found_answers} / {len(self.current_gens_id)}" 
+        self.progress_label["text"] = f"{self.found_answers} / {len(gens.getCurrentIDs(self.language.index))}" 
 
 
     def SaveHighscores(self):
@@ -904,7 +801,7 @@ class Game:
             output = ""
             if self.current_game_id == 0:
                 output += "1\n1"
-                output += "0"*(Game.total_gen_number-1)
+                output += "0"*(gens.total_gen_number-1)
             else:
                 output += str(self.gen_number)
                 output += "\n"
@@ -921,20 +818,12 @@ class Game:
                 output += "0"
             file.write(output.encode())
 
-    def LoadGen(self, gennumbers):
-        first = True
-        for i in range(0,Game.total_gen_number):
-            igenval = gennumbers[i]
-            if igenval == 1:
-                if first:
-                    self.GenButton(i+1)
-                    first = False
-                else:
-                    self.GenButton(i+1,True)
             
     def SaveProgress(self):
         output = f"{self.language.tag}\n"
         output += f"{self.CalculateCurrentGameID()}\n"
+        output += f"{self.in_order_mode}\n"
+        output += f"{int(self.previous_completed)}\n"
         output += f"{self.found_answers}\n"
         output += f"{self.pause_time}\n"
 
@@ -948,23 +837,24 @@ class Game:
                     if pokemontext["fg"] == "green": # found both names
                         output += "3 "
                     else: # not both
-                        if pokemontext["text"] in self.current_gens_id_ger.values(): # only german
+                        if gens.current.containsName(pokemontext["text"], loc.getIndexFromTag("ger")): # only german
                             output += "1 "
-                        elif pokemontext["text"] in self.current_gens_id_eng.values(): # only english
+                        elif gens.current.containsName(pokemontext["text"], loc.getIndexFromTag("eng")): # only english
                             output += "2 "
                         else:
                             print("ERROR in SaveProgress, language is \"all\", but pokemon is not in any of the language lists")
         
         output += "\n"
         
-        with open("savestate.txt", mode="wb") as file:
+        with open(Game.savestate_location, mode="wb") as file:
             file.write(output.encode())
     
     def LoadProgress(self):
-        if not exists("savestate.txt"):
+        if not exists(Game.savestate_location):
             return
         #else:
-        with open("savestate.txt", mode="rb") as file:
+        print("Found old save state. Load it...")
+        with open(Game.savestate_location, mode="rb") as file:
             d = file.read()
             lines = d.decode().split("\n")
             lang = lines[0]
@@ -973,15 +863,18 @@ class Game:
             # # is not supported for gameid, yet...
             # gameid = int(lines[1]) 
             # self.current_game_id = gameid
-            answers = int(lines[2])
+            inorder = int(lines[2])
+            self.in_order_mode = inorder
+            self.previous_completed = bool(int(lines[3]))
+            answers = int(lines[4])
             self.found_answers = answers
-            timer = int(lines[3])
+            timer = int(lines[5])
             self.pause_time = timer
-            self.time_needed = self.maxtime*10-self.pause_time
-            self.progress = [int(i) for i in lines[4].split()]
+            self.time_needed = gens.getMaxTime()*10-self.pause_time
+            self.progress = [int(i) for i in lines[6].split()]
         
         self.loaded_progress = True
-        remove("savestate.txt")
+        remove(Game.savestate_location)
         
 
 game = Game()

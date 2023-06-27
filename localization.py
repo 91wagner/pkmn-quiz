@@ -17,7 +17,6 @@ class Language():
         self.loading = dict.get("loading", "Loading...")
         self.paused = dict.get("paused", "Paused")
         self.game = dict.get("game", "Game")
-        self.highscore = dict.get("highscore", "Highscore")
         self.highscores = dict.get("highscores", "Highscores")
 
         self.choose_gen = dict.get("gen_text", "Choose generation")
@@ -47,7 +46,6 @@ german = {
     "loading": "Lädt...",
     "paused": "Pausiert",
     "game": "Spiel",
-    # "highscore": "Highscore",
     # "highscores": "Highscores",
 
     "choose_gen": "Wähle eine Generation",
@@ -102,10 +100,14 @@ class Localization():
                 return self.languages[val.tag]
         print(f"ERROR: No language with index {index} found. Return default ({self.default})...")
         return self.languages[self.default]
+    
+    def getIndexFromTag(self, tag):
+        return self.languages[tag].index
 
 
 
 
+# !!!when adding new languages, make sure that the index of "all" is the last one!!!
 loc = Localization()
 loc.addLanguage("all", Language(index=2, dict={"name":"All", "tag": "all"}))
 loc.addLanguage("eng", Language(index=1, dict={"name":"English", "tag": "eng"}))
