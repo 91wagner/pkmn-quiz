@@ -293,7 +293,8 @@ class Game:
                 self.gen_number = 0
                 
                 gens.buildCurrent(current) 
-
+                
+            self.found_answers = 0
             self.UpdateGenTitle()
             self.LanguageButton(loc.getLanguageFromIndex(language_radio_var.get()).tag)
             self.start_button["text"] = self.language.start
