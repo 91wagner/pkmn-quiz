@@ -1,5 +1,14 @@
 import importlib
-
+# need a way to include them to exe without explicity importing them 
+import poke_gen1
+import poke_gen2
+import poke_gen3
+import poke_gen4
+import poke_gen5
+import poke_gen6
+import poke_gen7
+import poke_gen8
+import poke_gen9
 
 print("Loading gens...")
 
@@ -133,8 +142,8 @@ class GenHandler():
         
         if len(indices)==0:
             self.current = self.secret
-        elif len(indices)==1:
-            self.current = self.gens[indices[0]-1]
+        # elif len(indices)==1:
+        #     self.current = self.gens[indices[0]-1]
         else:
             self.current = Gen()
             for i in indices:

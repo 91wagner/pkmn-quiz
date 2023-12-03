@@ -279,9 +279,14 @@ class Game:
             # print("In order mode: ", in_order_var.get())
             self.AddLoadingBlock()
             if gen_radio_var.get() > 0:
-                gens.buildCurrent(gen_radio_var.get())
+                self.gen_number = gen_radio_var.get()
+                for i in range(0,gens.total_gen_number):
+                    if i+1 == self.gen_number:
+                        self.gens_active[i] = 1
+                    else:
+                        self.gens_active[i] = 0
+                gens.buildCurrent(self.gen_number)
             else:
-                first = True
                 current = []
                 for i in range(0,gens.total_gen_number):
                     igenval = igens[i].get()
@@ -745,6 +750,8 @@ class Game:
         for dexnumber in gens.getCurrentIDs(self.language.index).keys():
             
             number = '{:03}'.format(dexnumber)
+            if self.gens_active[8]==1:            
+                number = '{:04}'.format(dexnumber)
             newnumberlabel = Label(text=f"#{number}", width=4, height=1, font=('Arial', fontsize, 'bold'), foreground=gens.gen_colors[self.GetGenNumber(dexnumber)-1])
             self.number_texts[dexnumber] = newnumberlabel
             newnumberlabel.place(x=5+width_of_column*(i//lines_per_column), y=start_yvalue+height_of_rows*(i%lines_per_column))

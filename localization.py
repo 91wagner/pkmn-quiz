@@ -19,7 +19,7 @@ class Language():
         self.game = dict.get("game", "Game")
         self.highscores = dict.get("highscores", "Highscores")
 
-        self.choose_gen = dict.get("gen_text", "Choose generation")
+        self.choose_gen = dict.get("choose_gen", "Choose a single generation")
         self.combination = dict.get("combination", "Combination")
         self.language_text = dict.get("language_text", "Language")
         self.multiple_gen = dict.get("multiple_gen", "Or combine several generations")
@@ -48,7 +48,7 @@ german = {
     "game": "Spiel",
     # "highscores": "Highscores",
 
-    "choose_gen": "Wähle eine Generation",
+    "choose_gen": "Wähle einzelne Generation",
     "combination": "Kombination",
     "language_text": "Sprache",
     "multiple_gen": "Oder kombiniere mehrere Generationen",
