@@ -1,11 +1,9 @@
 from ctypes import alignment
 from glob import glob
-from socketserver import ThreadingUDPServer
 from tkinter import *
 import math
 import time
 #import pypokedex
-import threading
 from os.path import exists
 from os import remove
 
@@ -69,7 +67,7 @@ class Game:
         self.xwindowbig = 1800
         self.ywindowbig = 1000
         self.windowbig = False
-        self.window.title(f"Sporcle: Pokemon Gen {1}")
+        self.window.title(f"Pkmn-Quiz: Pokemon Gen {1}")
         self.window.config(bg="LightSkyBlue1")
 
 
@@ -334,7 +332,7 @@ class Game:
 
     def UpdateGenTitle(self):
         self.gen_label["text"] = gens.current.getTitle()
-        self.window.title(f"Sporcle: Pokemon {gens.current.getTitle()}")
+        self.window.title(f"Pkmn-Quiz: Pokemon {gens.current.getTitle()}")
 
     def LanguageButton(self, lang=""):
 
