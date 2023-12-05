@@ -1,0 +1,7 @@
+build/*
+dist/*
+__pycache__/*
+.highscore.txt
+.settings.txt
+game.spec
+pokemon_list*.py
