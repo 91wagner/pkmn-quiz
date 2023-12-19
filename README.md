@@ -24,6 +24,7 @@ The code was tested on the following two systems, but most likely also other com
 - Windows 11 with python 3.12.0
 
 The following python packages are needed (most of which are very likely already installed):  
+- pygame  
 - tkinter  
 - ctypes  
 - glob  
@@ -31,3 +32,5 @@ The following python packages are needed (most of which are very likely already 
 - time  
 - os  
 - importlib  
+if you want to install the game, you need:  
+- pyinstaller
